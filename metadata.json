@@ -1,5 +1,5 @@
 {
-  "name": "Truth Tally: Community News Verifier",
+  "name": "Truthlens",
   "description": "A web application that uses community polling, geolocation data, and AI analysis to determine the authenticity of news reports. Users can vote on news, submit evidence, and get AI-powered verification to combat misinformation.",
   "requestFramePermissions": [
     "geolocation"

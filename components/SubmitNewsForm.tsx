@@ -1,11 +1,14 @@
 
-import React, { useState } from 'react';
-import { NewsItem, VerificationStatus } from '../types';
+import React, { useState, useContext } from 'react';
+import { NewsItem, VerificationStatus, CATEGORIES, Category } from '../types';
 import { verifyNews, VerificationResult } from '../services/geminiService';
 import { UploadIcon, SpinnerIcon } from './icons';
+import { AuthContext } from '../contexts/AuthContext';
+
 
 interface SubmitNewsFormProps {
-  onAddNews: (newsItem: Omit<NewsItem, 'id' | 'votes' | 'evidence' | 'clicks' | 'userHasVoted'>) => void;
+  // Fix: Added 'createdAt' to Omit type to match parent component's handler signature.
+  onAddNews: (newsItem: Omit<NewsItem, 'id' | 'votes' | 'evidence' | 'clicks' | 'userVote' | 'userVoteId' | 'userVoteCount' | 'sharedByUser' | 'createdAt'>) => void;
 }
 
 const fileToBase64 = (file: File): Promise<string> =>
@@ -21,9 +24,12 @@ const SubmitNewsForm: React.FC<SubmitNewsFormProps> = ({ onAddNews }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [location, setLocation] = useState('');
+  const [category, setCategory] = useState<Category>('Other');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const { updateCredits } = useContext(AuthContext);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,10 +53,16 @@ const SubmitNewsForm: React.FC<SubmitNewsFormProps> = ({ onAddNews }) => {
     try {
       const verificationResult: VerificationResult = await verifyNews(description, base64Image, mimeType);
       
-      const newNews: Omit<NewsItem, 'id' | 'votes' | 'evidence' | 'clicks' | 'userHasVoted'> = {
+      if (verificationResult.verdict === 'FAKE') {
+        updateCredits(-10); // Penalty for submitting misleading post
+      }
+
+      // Fix: Added 'createdAt' to Omit to resolve the missing property error.
+      const newNews: Omit<NewsItem, 'id' | 'votes' | 'evidence' | 'clicks' | 'userVote' | 'userVoteId' | 'userVoteCount' | 'sharedByUser' | 'createdAt'> = {
         title,
         description,
         location,
+        category,
         imageUrl,
         verification: {
           status: VerificationStatus[verificationResult.verdict],
@@ -64,6 +76,7 @@ const SubmitNewsForm: React.FC<SubmitNewsFormProps> = ({ onAddNews }) => {
       setTitle('');
       setDescription('');
       setLocation('');
+      setCategory('Other');
       setImageFile(null);
       
       const fileInput = document.getElementById('image-upload') as HTMLInputElement;
@@ -97,14 +110,24 @@ const SubmitNewsForm: React.FC<SubmitNewsFormProps> = ({ onAddNews }) => {
           rows={3}
           disabled={isLoading}
         />
-        <input
-          type="text"
-          placeholder="Location of the event (e.g., city, state)"
-          value={location}
-          onChange={(e) => setLocation(e.target.value)}
-          className="w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-          disabled={isLoading}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input
+              type="text"
+              placeholder="Location of the event (e.g., city, state)"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              className="w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              disabled={isLoading}
+            />
+            <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as Category)}
+                className="w-full bg-gray-700 border border-gray-600 rounded-md px-4 py-2 text-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                disabled={isLoading}
+            >
+                {CATEGORIES.map(cat => <option key={cat} value={cat}>{cat}</option>)}
+            </select>
+        </div>
         <div>
           <label htmlFor="image-upload" className="block text-sm font-medium text-gray-300 mb-2">Upload an image (optional)</label>
           <input

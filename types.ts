@@ -7,10 +7,21 @@ export enum VerificationStatus {
   DILEMMA = 'Dilemma',
 }
 
+export const CATEGORIES = ['Health', 'Politics', 'Technology', 'Society', 'Environment', 'Other'] as const;
+export type Category = typeof CATEGORIES[number];
+
 export interface Vote {
   id: string;
   isReal: boolean;
   location: string; 
+  timestamp: string;
+}
+
+export interface ResponseItem {
+    id: string;
+    authorId: string;
+    authorUsername: string;
+    text: string;
 }
 
 export interface Evidence {
@@ -18,6 +29,8 @@ export interface Evidence {
   text: string;
   imageUrl?: string;
   authorLocation: string;
+  likes: string[]; // Array of User IDs
+  responses: ResponseItem[];
 }
 
 export interface NewsItem {
@@ -26,6 +39,7 @@ export interface NewsItem {
   description: string;
   imageUrl?: string;
   location: string;
+  category: Category;
   votes: Vote[];
   evidence: Evidence[];
   clicks: number;
@@ -35,11 +49,25 @@ export interface NewsItem {
     reasoning?: string;
     isAiGenerated?: boolean;
   };
-  userHasVoted: boolean;
+  userVote: boolean | null;
+  userVoteId: string | null;
+  userVoteCount: number;
+  sharedByUser: boolean;
+  createdAt: string;
 }
 
 export interface GeolocationState {
     latitude: number | null;
     longitude: number | null;
     error: string | null;
+}
+
+export interface User {
+  id: string;
+  username: string;
+  gender: 'male' | 'female' | 'other' | 'prefer-not-to-say';
+  dob: string; 
+  location: string;
+  credits: number;
+  preferredCategories: Category[];
 }

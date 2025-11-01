@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Vote, GeolocationState } from '../types';
 import { LocationIcon } from './icons';
@@ -9,10 +8,10 @@ interface PollResultsProps {
   userLocation: GeolocationState;
 }
 
-// A simple heuristic to check if a vote is "local"
-// In a real app, this would use a proper geocoding/distance service.
+// Checks if a vote is "local" by comparing city names. This is more reliable
+// now that we convert user coordinates to the nearest city name.
 const isLocal = (voteLocation: string, newsLocation: string): boolean => {
-    return voteLocation.toLowerCase().includes(newsLocation.toLowerCase()) || newsLocation.toLowerCase().includes(voteLocation.toLowerCase());
+    return voteLocation.toLowerCase() === newsLocation.toLowerCase();
 }
 
 const PollResults: React.FC<PollResultsProps> = ({ votes, newsLocation }) => {
